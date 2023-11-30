@@ -1,14 +1,10 @@
 import numpy as np
+import torch
 
 def load_and_preprocess_data(filepath):
-    # Load the .npy file
     data = np.load(filepath)
-
-    # Assuming your data is in the format (color, height, width)
-    # Reshape it to (height, width, color)
-    data = np.transpose(data, (1, 2, 0))
-
-    # Normalize the data
-    data = data / 255.0
+    data = np.transpose(data, (0, 3, 1, 2))  # Change data from (N, H, W, C) to (N, C, H, W)
+    data = data / 255.0  # Normalize data
+    data = torch.tensor(data, dtype=torch.float32)  # Convert to PyTorch tensor
 
     return data
