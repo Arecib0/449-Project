@@ -1,34 +1,39 @@
 # Raw copilot output for using resnet50 below
 
-# Step 1: Import necessary libraries
-from keras.applications.resnet50 import ResNet50, preprocess_input
-from keras.preprocessing.image import ImageDataGenerator
-from keras.models import Model
-from keras.layers import Dense, GlobalAveragePooling2D
-from keras.optimizers import Adam
-from load import load_and_preprocess_data
+# Import necessary libraries
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torchvision import models, transforms
+from torch.utils.data import DataLoader, random_split
+from load import load_and_preprocess_data, load_labels
 from loss import combined_loss
 
-#Step 1.5: Load data
+# Load data
 data = load_and_preprocess_data('Data\images_Y10_test_150.npy')
+# Assumes the data is of the shape (num_images, height, width, channels)
+# ResNet50 expects image that are 224x224
 
-# Step 2: Load ResNet50 model without top layer
-base_model = ResNet50(weights='imagenet', include_top=False)
+# Load labels
+labels=load_labels(file_path)
 
-# Step 3: Add new classification layer
-x = base_model.output
-x = GlobalAveragePooling2D()(x)
-x = Dense(1024, activation='relu')(x)
-predictions = Dense(3, activation='softmax')(x)
+# Load ResNet50 model without top layer
+base_model = models.resnet50(pretrained=True)
+num_ftrs = base_model.fc.in_features
+base_model.fc = nn.Linear(num_ftrs, 3)  # replace 3 with your number of classes
 
-model = Model(inputs=base_model.input, outputs=predictions)
+# Define the loss function and optimizer
+criterion = combined_loss
+optimizer = optim.SGD(base_model.parameters(), lr=0.01, momentum=0.9, nesterov=True)
 
-# Step 5: Compile the model
-model.compile(optimizer=Adam(), loss=combined_loss)
+# Train the model
+for epoch in range(10):  # loop over the dataset multiple times
+    optimizer.zero_grad()  # zero the parameter gradients
 
-# Step 6: Preprocess your training data
-train_datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
-train_generator = train_datagen.flow_from_directory('data/train', target_size=(224, 224), batch_size=32)
+    # forward + backward + optimize
+    outputs = base_model(data)
+    loss = criterion(outputs, labels)
+    loss.backward()
+    optimizer.step()
 
-# Step 7: Train the model
-model.fit_generator(train_generator, steps_per_epoch=2000, epochs=10)
+print('Finished Training')
