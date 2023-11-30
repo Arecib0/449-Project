@@ -14,3 +14,10 @@ def load_and_preprocess_data(filepath):
     data = torch.tensor(data, dtype=torch.float32)  # Convert to PyTorch tensor
 
     return data
+
+def load_labels(filepath):
+
+    labels = np.load(filepath)
+    labels = torch.tensor(labels, dtype=torch.long)
+    
+    return labels
