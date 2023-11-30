@@ -16,8 +16,14 @@ def load_and_preprocess_data(filepath):
     return data
 
 def load_labels(filepath):
-
-    labels = np.load(filepath)
+    """
+    Loads labels from filepath in a one-hot encoded format (i.e. [0, 1, 0] for class 2)
+    
+    :param filepath: Path to labels
+    :return: Labels in form of PyTorch tensor of shape (N, C)
+    """
+    labels = np.load(filepath) 
     labels = torch.tensor(labels, dtype=torch.long)
     
     return labels
+
