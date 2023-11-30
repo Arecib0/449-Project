@@ -24,7 +24,7 @@ base_model.fc = nn.Linear(num_ftrs, 3)  # replace 3 with your number of classes
 
 # Define the loss function and optimizer
 criterion = combined_loss
-optimizer = optim.Adam(base_model.parameters())
+optimizer = optim.SGD(base_model.parameters(), lr=0.01, momentum=0.9, nesterov=True)
 
 # Train the model
 for epoch in range(10):  # loop over the dataset multiple times
