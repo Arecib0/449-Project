@@ -26,9 +26,6 @@ model = Model(inputs=base_model.input, outputs=predictions)
 # Step 5: Compile the model
 model.compile(optimizer=Adam(), loss=combined_loss)
 
-# Train the model on your data
-model.fit(data, labels)  # assuming labels is your array of labels
-
 # Step 6: Preprocess your training data
 train_datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
 train_generator = train_datagen.flow_from_directory('data/train', target_size=(224, 224), batch_size=32)
