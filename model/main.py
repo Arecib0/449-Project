@@ -6,6 +6,11 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Model
 from keras.layers import Dense, GlobalAveragePooling2D
 from keras.optimizers import Adam
+from load import load_and_preprocess_data
+from loss import combined_loss
+
+#Step 1.5: Load data
+data = load_and_preprocess_data('Data\images_Y10_test_150.npy')
 
 # Step 2: Load ResNet50 model without top layer
 base_model = ResNet50(weights='imagenet', include_top=False)
@@ -13,16 +18,16 @@ base_model = ResNet50(weights='imagenet', include_top=False)
 # Step 3: Add new classification layer
 x = base_model.output
 x = GlobalAveragePooling2D()(x)
-predictions = Dense(number_of_classes, activation='softmax')(x)  # replace number_of_classes with your number of classes
+x = Dense(1024, activation='relu')(x)
+predictions = Dense(3, activation='softmax')(x)
 
 model = Model(inputs=base_model.input, outputs=predictions)
 
-# Step 4: Freeze the layers of ResNet50 (optional)
-for layer in base_model.layers:
-    layer.trainable = False
-
 # Step 5: Compile the model
-model.compile(optimizer=Adam(), loss='categorical_crossentropy')
+model.compile(optimizer=Adam(), loss=combined_loss)
+
+# Train the model on your data
+model.fit(data, labels)  # assuming labels is your array of labels
 
 # Step 6: Preprocess your training data
 train_datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
