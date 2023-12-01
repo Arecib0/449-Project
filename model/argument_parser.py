@@ -10,5 +10,5 @@ def create_arg_parser():
     parser.add_argument('--momentum', type=float, default=0.9, help='Momentum.')
     parser.add_argument('--rho', type=float, default=0.5, help='Target entropy.')
     parser.add_argument('--m', type=float, default=0.1, help='Entropy threshold.')
-    parser.add_argument('--loss_weight', type=float, default=0.1, help='Weight for clustering and entropy separation losses.')
+    parser.add_argument('--loss_weight', type=float, default=0.005, help='Weight for clustering and entropy separation losses.')
     return parser
