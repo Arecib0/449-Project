@@ -51,7 +51,7 @@ def main(args):
     # Test the model
     ## test_model(base_model)  # Uncomment this line to test your model
 
-    if __name__ == 'main':
-        parser=create_arg_parser()
-        args=parser.parse_args()
-        main(args)
+if __name__ == 'main':
+    parser=create_arg_parser()
+    args=parser.parse_args()
+    main(args)
