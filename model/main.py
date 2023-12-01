@@ -22,9 +22,17 @@ def main(args):
     # Load labels
     train_labels = load_labels(args.labels_path)
 
+    validation_data = load_and_preprocess_data(args.validation_path)
+    validation_labels = load_labels(args.validation_labels_path)
+
+
     # Create a DataLoader for your training data
     train_dataset = TensorDataset(train_data, train_labels)
     train_dataloader = DataLoader(train_dataset, batch_size=32)
+
+    # Create a DataLoader for your validation data
+    val_dataset = TensorDataset(validation_data, validation_labels)
+    val_dataloader = DataLoader(val_dataset, batch_size=32)
 
     # Load ResNet50 model without top layer
     # I'm setting pretrained to False because I believe that the paper did not use a pretained model
@@ -36,6 +44,10 @@ def main(args):
     # Define the loss function and optimizer
     criterion = lambda outputs, labels: combined_loss(labels, outputs, args.loss_weight, args.rho, args.m)
     optimizer = optim.SGD(base_model.parameters(), lr=args.lr, momentum=args.momentum, nesterov=True)
+
+    # Initialize variables for early stopping
+    best_accuracy = 0.0
+    epochs_no_improve = 0
 
     # Initialize lists to store the losses
     ce_losses = []
@@ -56,12 +68,37 @@ def main(args):
 
             loss.backward()
             optimizer.step()
+        # Evaluate on the validation set
+        base_model.eval()
+        with torch.no_grad():
+            correct = 0
+            total = 0
+            for inputs, labels in val_dataloader:
+                outputs = base_model(inputs)
+                _, predicted = torch.max(outputs.data, 1)
+                total += labels.size(0)
+                correct += (predicted == labels).sum().item()
+            accuracy = correct / total
+        # Check for improvement
+        if accuracy > best_accuracy:
+            best_accuracy = accuracy
+            epochs_no_improve = 0
+        else:
+            epochs_no_improve += 1
 
+        # Early stopping
+        if epochs_no_improve == 12:
+            print('Early stopping!')
+            break
+
+        # Switch back to training mode
+        base_model.train()
+    
     print('Finished Training')
 
     # Save Loss
     plotLoss(ce_losses, ac_losses, es_losses)
-    
+
     # Save the model
     torch.save(base_model.state_dict(), 'trained_model.pt')
 
