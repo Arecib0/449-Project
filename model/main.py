@@ -30,8 +30,8 @@ def main(args):
     base_model.fc = nn.Linear(num_ftrs, args.num_classes)  # replace 3 with your number of classes
 
     # Define the loss function and optimizer
-    criterion = combined_loss
-    optimizer = optim.SGD(base_model.parameters(), lr=0.01, momentum=0.9, nesterov=True)
+    criterion = lambda outputs, labels: combined_loss(labels, outputs, args.loss_weight, args.rho, args.m)
+    optimizer = optim.SGD(base_model.parameters(), lr=args.lr, momentum=args.momentum, nesterov=True)
 
     # Train the model
     for epoch in range(10):  # Assuming you want to train for 10 epochs
@@ -47,7 +47,7 @@ def main(args):
     torch.save(base_model.state_dict(), 'trained_model.pt')
 
     # Test the model
-    test_model(base_model)  # Uncomment this line to test your model
+    ## test_model(base_model)  # Uncomment this line to test your model
 
     if __name__ == 'main':
         parser=create_arg_parser()
