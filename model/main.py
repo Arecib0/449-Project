@@ -10,6 +10,8 @@ from load import load_and_preprocess_data, load_labels
 from loss import combined_loss
 from test import test_model
 from argument_parser import create_arg_parser
+from plot import plotLoss
+
 
 def main(args):
     # Load data
@@ -35,21 +37,31 @@ def main(args):
     criterion = lambda outputs, labels: combined_loss(labels, outputs, args.loss_weight, args.rho, args.m)
     optimizer = optim.SGD(base_model.parameters(), lr=args.lr, momentum=args.momentum, nesterov=True)
 
+    # Initialize lists to store the losses
+    ce_losses = []
+    ac_losses = []
+    es_losses = []
+
     # Train the model
     for epoch in range(args.epochs):  # Assuming you want to train for 10 epochs
         for inputs, labels in train_dataloader:
             optimizer.zero_grad()
             outputs = base_model(inputs)
-            loss = criterion(outputs, labels)
+            loss, ce_loss, ac_loss, es_loss = criterion(outputs, labels)  
             
-            # Note to self to add a way to save the loss per epoch and plot it
-            # for CE, AC, and ES
-            # Delete these comments when implemented
+            # Save the losses
+            ce_losses.append(ce_loss.item())
+            ac_losses.append(ac_loss.item())
+            es_losses.append(es_loss.item())
 
             loss.backward()
             optimizer.step()
 
     print('Finished Training')
+
+    # Save Loss
+    plotLoss(ce_losses, ac_losses, es_losses)
+    
     # Save the model
     torch.save(base_model.state_dict(), 'trained_model.pt')
 
