@@ -13,9 +13,21 @@ def adaptive_clustering(y_true, y_pred):
     # Replace this with your actual implementation
     return torch.mean(y_pred - y_true)
 
-def entropy_separation(y_true, y_pred):
-    # Replace this with your actual implementation
-    return torch.mean(y_pred - y_true)
+def entropy_separation(y_true, y_pred, rho, m):
+    # Calculate entropy of the predictions
+    p_log_p = y_pred * torch.log(y_pred + 1e-9)  # add a small constant to avoid log(0)
+    entropy = -p_log_p.sum(dim=1)
+    
+    # Calculate mean entropy
+    mean_entropy = entropy.mean()
+    
+    # Calculate absolute difference from rho
+    diff = torch.abs(mean_entropy - rho)
+    
+    # Apply threshold
+    loss = torch.where(diff > m, -diff, torch.zeros_like(diff))
+    
+    return loss.mean()
 
 def combined_loss(y_true, y_pred):
     return cross_entropy(y_true, y_pred) + adaptive_clustering(y_true, y_pred) + entropy_separation(y_true, y_pred)
