@@ -14,6 +14,9 @@ def adaptive_clustering(y_true, y_pred):
     return torch.mean(y_pred - y_true)
 
 def entropy_separation(y_true, y_pred, rho, m):
+    # Apply softmax to convert raw output to probabilities
+    y_pred = torch.softmax(y_pred, dim=1)
+
     # Calculate entropy of the predictions
     p_log_p = y_pred * torch.log(y_pred + 1e-9)  # add a small constant to avoid log(0)
     entropy = -p_log_p.sum(dim=1)
