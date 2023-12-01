@@ -13,7 +13,7 @@ def adaptive_clustering(y_true, y_pred):
     # Replace this with your actual implementation
     return torch.mean(y_pred - y_true)
 
-def entropy_separation(y_true, y_pred, rho, m):
+def entropy_separation(y_pred, rho, m):
     # Assumes that y_pred is the raw output of the model
     # and that y_pred is a 2D tensor of shape (N, num_classes)
     # In this case, the 2nd dimension corresponds to raw output for each class
@@ -39,4 +39,4 @@ def entropy_separation(y_true, y_pred, rho, m):
     return loss.mean()
 
 def combined_loss(y_true, y_pred, rho, m):
-    return cross_entropy(y_true, y_pred) + adaptive_clustering(y_true, y_pred) + entropy_separation(y_true, y_pred, rho, m)
+    return cross_entropy(y_true, y_pred) + adaptive_clustering(y_true, y_pred) + entropy_separation(y_pred, rho, m)
