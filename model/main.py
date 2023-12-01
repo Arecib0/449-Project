@@ -25,7 +25,9 @@ def main(args):
     train_dataloader = DataLoader(train_dataset, batch_size=32)
 
     # Load ResNet50 model without top layer
-    base_model = models.resnet50(pretrained=True)
+    # I'm setting pretrained to False because I believe that the paper did not use a pretained model
+    # If we need to, we can re-enable this later
+    base_model = models.resnet50(pretrained=False)
     num_ftrs = base_model.fc.in_features
     base_model.fc = nn.Linear(num_ftrs, args.num_classes)  # replace 3 with your number of classes
 
