@@ -10,7 +10,7 @@ def plotLoss(ce_losses, ac_losses, es_losses):
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
     plt.legend()
-    plt.savefig('Data/loss_plot.png')
+    plt.savefig('Output/loss_plot.png')
 
     # Plot and save the CE loss
     plt.figure(figsize=(10, 5))
@@ -18,7 +18,7 @@ def plotLoss(ce_losses, ac_losses, es_losses):
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
     plt.legend()
-    plt.savefig('Data/ce_loss_plot.png')
+    plt.savefig('Output/ce_loss_plot.png')
     plt.close()
 
     # Plot and save the AC loss
@@ -27,7 +27,7 @@ def plotLoss(ce_losses, ac_losses, es_losses):
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
     plt.legend()
-    plt.savefig('Data/ac_loss_plot.png')
+    plt.savefig('Output/ac_loss_plot.png')
     plt.close()
 
     # Plot and save the ES loss
@@ -36,6 +36,6 @@ def plotLoss(ce_losses, ac_losses, es_losses):
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
     plt.legend()
-    plt.savefig('Data/es_loss_plot.png')
+    plt.savefig('Output/es_loss_plot.png')
     plt.close()
     
