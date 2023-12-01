@@ -36,11 +36,16 @@ def main(args):
     optimizer = optim.SGD(base_model.parameters(), lr=args.lr, momentum=args.momentum, nesterov=True)
 
     # Train the model
-    for epoch in range(10):  # Assuming you want to train for 10 epochs
+    for epoch in range(args.epochs):  # Assuming you want to train for 10 epochs
         for inputs, labels in train_dataloader:
             optimizer.zero_grad()
             outputs = base_model(inputs)
             loss = criterion(outputs, labels)
+            
+            # Note to self to add a way to save the loss per epoch and plot it
+            # for CE, AC, and ES
+            # Delete these comments when implemented
+
             loss.backward()
             optimizer.step()
 
