@@ -75,7 +75,7 @@ def main(args):
     # I'm not sure what number would be best for your machine when you're
     # training the model, since I don't know how much memory you have.
     # If you run out of memory, you can try reducing this number.
-    # But honetly, I don't think it will be a problem.
+    # But honestly, I don't think it will be a problem.
     # If anything, we'll more likely have to increase this number.
 
     # Train the model
