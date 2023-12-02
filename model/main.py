@@ -128,6 +128,11 @@ def main(args):
         for inputs, labels in target_train_dataloader:
             optimizer.zero_grad()
             outputs = base_model(inputs)
+            
+            # Update the memory bank
+            with torch.no_grad():
+                features = feature_extractor(inputs)
+                memory_bank.update(features, labels)
 
             # Compute similarity
             features = feature_extractor(inputs)
