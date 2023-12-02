@@ -1,6 +1,7 @@
 import numpy as np
 import torch
-from torchvision.transforms import Resize
+from torchvision.transforms import Compose, ToTensor, Normalize, Resize
+from PIL import Image
 
 def load_and_preprocess_data(filepath):
     """
@@ -11,9 +12,15 @@ def load_and_preprocess_data(filepath):
     data_list = np.load(filepath)
     data = np.stack(data_list, axis=0)  # Convert list of arrays to array of arrays
     data = np.transpose(data, (0, 3, 1, 2))  # Change data from (N, H, W, C) to (N, C, H, W)
-    data = Resize((224, 224))(data)  # Resize images to 224x224
-    data = data / 255.0  # Normalize data
-    data = torch.tensor(data, dtype=torch.float32)  # Convert to PyTorch tensor
+
+    # Define the preprocessing steps
+    preprocess = Compose([
+        Resize((224, 224)),  # Resize images to 224x224
+        ToTensor(),  # Convert to PyTorch tensor
+        Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # Normalize data
+    ])
+        # Apply the preprocessing steps to each image
+    data = torch.stack([preprocess(Image.fromarray(img)) for img in data])
 
     return data
 
