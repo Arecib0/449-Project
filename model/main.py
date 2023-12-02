@@ -47,7 +47,8 @@ def main(args):
     optimizer = optim.SGD(base_model.parameters(), lr=args.lr, momentum=args.momentum, nesterov=True)
 
     # Define the scheduler
-    scheduler = StepLR(optimizer, step_size=10, gamma=0.1)  # Decrease lr by a factor of 0.1 every 10 epochs
+    # This will decrease the learning rate by a factor of 0.1 every 10 epochs
+    scheduler = StepLR(optimizer, step_size=10, gamma=0.1)
 
     # Initialize variables for early stopping
     best_accuracy = 0.0
@@ -76,6 +77,7 @@ def main(args):
         scheduler.step() # Update the learning rate
         # Evaluate on the validation set
         base_model.eval()
+
         with torch.no_grad():
             correct = 0
             total = 0
