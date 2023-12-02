@@ -128,15 +128,15 @@ def main(args):
         for inputs, labels in target_train_dataloader:
             optimizer.zero_grad()
             outputs = base_model(inputs)
-            
-            # Update the memory bank
-            with torch.no_grad():
-                features = feature_extractor(inputs)
-                memory_bank.update(features, labels)
 
             # Compute similarity
             features = feature_extractor(inputs)
             similarity = memory_bank.compute_similarity(features)
+
+            # Update the memory bank
+            with torch.no_grad():
+                features = feature_extractor(inputs)
+                memory_bank.update(features, labels)
 
             # Compute loss with similarity
             # The similarity is used in the adaptive clustering loss
