@@ -78,6 +78,11 @@ def main(args):
             loss, ce_loss, ac_loss, es_loss = criterion(outputs, labels)  
             
             # Save the losses
+
+            # When the adaptive clustering loss is implemented,
+            # for the labeled source data the class labels are
+            # used to generate the similarity labels rather than
+            # the output prediction vectors.
             ce_losses.append(ce_loss.item())
             ac_losses.append(ac_loss.item())
             es_losses.append(es_loss.item())
@@ -129,6 +134,12 @@ def main(args):
             similarity = memory_bank.compute_similarity(features)
 
             # Compute loss with similarity
+            # The similarity is used in the adaptive clustering loss
+            # which is at this point unwritten.
+            # When Eric writes the adaptive clustering loss, he can
+            # use this similarity to compute the loss.
+            # I believe that this, combined with the entropy separation
+            # loss, is the primary domain adaptation method used in the paper.
             loss = criterion(outputs, labels, similarity)  
             loss.backward()
             optimizer.step()
