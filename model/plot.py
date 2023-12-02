@@ -11,6 +11,7 @@ def plotLoss(ce_losses, ac_losses, es_losses):
     plt.ylabel('Loss')
     plt.legend()
     plt.savefig('Output/loss_plot.png')
+    plt.close()
 
     # Plot and save the CE loss
     plt.figure(figsize=(10, 5))
