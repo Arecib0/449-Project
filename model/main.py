@@ -19,6 +19,7 @@ from memory import MemoryBank
 def main(args):
     # Load data
     train_data = load_and_preprocess_data(args.data_path)
+    target_data = load_and_preprocess_data("Data\images_Y1_test_150.npy")
     # Assumes the data is of the shape (num_images, height, width, channels)
     # ResNet50 expects image that are 224x224
 
@@ -36,6 +37,10 @@ def main(args):
     # Create a DataLoader for your validation data
     val_dataset = TensorDataset(validation_data, validation_labels)
     val_dataloader = DataLoader(val_dataset, batch_size=32)
+
+    # Create a DataLoader for your target training data
+    target_train_dataset = TensorDataset(target_data, train_labels)
+    target_train_dataloader = DataLoader(target_train_dataset, batch_size=32)
 
     # Load ResNet50 model without top layer
     # I'm setting pretrained to False because I believe that the paper did not use a pretained model
@@ -112,6 +117,21 @@ def main(args):
 
         # Switch back to training mode
         base_model.train()
+
+    # Adapt the model to the target domain
+    for epoch in range(args.epochs):  
+        for inputs, labels in target_train_dataloader:
+            optimizer.zero_grad()
+            outputs = base_model(inputs)
+
+            # Compute similarity
+            features = feature_extractor(inputs)
+            similarity = memory_bank.compute_similarity(features)
+
+            # Compute loss with similarity
+            loss = criterion(outputs, labels, similarity)  
+            loss.backward()
+            optimizer.step()
     
     print('Finished Training')
 
