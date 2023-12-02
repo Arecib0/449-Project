@@ -12,6 +12,7 @@ from test import test_model
 from argument_parser import create_arg_parser
 from plot import plotLoss
 from torch.optim.lr_scheduler import StepLR
+from feature_extractor import FeatureExtractor
 
 
 def main(args):
@@ -59,12 +60,17 @@ def main(args):
     ac_losses = []
     es_losses = []
 
+    # Initialize the feature extractor
+    feature_extractor = FeatureExtractor(base_model)
+
     # Train the model
     for epoch in range(args.epochs):  # Assuming you want to train for 10 epochs
         for inputs, labels in train_dataloader:
             optimizer.zero_grad()
             outputs = base_model(inputs)
             loss, ce_loss, ac_loss, es_loss = criterion(outputs, labels)  
+
+            features = feature_extractor(inputs)
             
             # Save the losses
             ce_losses.append(ce_loss.item())
@@ -108,7 +114,7 @@ def main(args):
     plotLoss(ce_losses, ac_losses, es_losses)
 
     # Save the model
-    torch.save(base_model.state_dict(), 'trained_model.pt')
+    # torch.save(base_model.state_dict(), 'trained_model.pt')
 
     # Test the model
     ## test_model(base_model)  # Uncomment this line to test your model
