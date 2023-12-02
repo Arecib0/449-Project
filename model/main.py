@@ -69,6 +69,14 @@ def main(args):
     # Initialize the feature extractor and memory bank
     feature_extractor = FeatureExtractor(base_model)
     memory_bank = MemoryBank(1000, 2048, device='cpu')
+    # The 1000 is the size of the memory bank, which is a hyperparameter
+    # and determines how many images are stored in the memory bank.
+    # Essentially, it's how much memory to allocate for storing the features.
+    # I'm not sure what number would be best for your machine when you're
+    # training the model, since I don't know how much memory you have.
+    # If you run out of memory, you can try reducing this number.
+    # But honetly, I don't think it will be a problem.
+    # If anything, we'll more likely have to increase this number.
 
     # Train the model
     for epoch in range(args.epochs):  # Assuming you want to train for 10 epochs
