@@ -15,10 +15,6 @@ class MemoryBank:
             self.ptr = (self.ptr + batch_size) % self.bank.size(0)
 
     def compute_similarity(self, features):
-        # Normalize the features and the memory bank
-        features = F.normalize(features, dim=1)
-        bank = F.normalize(self.bank, dim=1)
-
-        # Compute the cosine similarity
-        similarity = torch.mm(features, bank.t())
+        # Compute the dot product similarity
+        similarity = torch.mm(features, self.bank.t())
         return similarity
