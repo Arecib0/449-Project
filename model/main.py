@@ -11,6 +11,7 @@ from loss import combined_loss
 from test import test_model
 from argument_parser import create_arg_parser
 from plot import plotLoss
+from torch.optim.lr_scheduler import StepLR
 
 
 def main(args):
@@ -45,6 +46,10 @@ def main(args):
     criterion = lambda outputs, labels: combined_loss(labels, outputs, args.loss_weight, args.rho, args.m)
     optimizer = optim.SGD(base_model.parameters(), lr=args.lr, momentum=args.momentum, nesterov=True)
 
+    # Define the scheduler
+    # This will decrease the learning rate by a factor of 0.1 every 10 epochs
+    scheduler = StepLR(optimizer, step_size=10, gamma=0.1)
+
     # Initialize variables for early stopping
     best_accuracy = 0.0
     epochs_no_improve = 0
@@ -68,8 +73,11 @@ def main(args):
 
             loss.backward()
             optimizer.step()
+
+        scheduler.step() # Update the learning rate
         # Evaluate on the validation set
         base_model.eval()
+
         with torch.no_grad():
             correct = 0
             total = 0
