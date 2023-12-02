@@ -78,6 +78,9 @@ def main(args):
     # But honestly, I don't think it will be a problem.
     # If anything, we'll more likely have to increase this number.
 
+    # Create a separate memory bank for the output vectors
+    output_memory_bank = MemoryBank(1000, args.num_classes, device='cpu')
+
     # Train the model
     for epoch in range(args.epochs):  # Assuming you want to train for 10 epochs
         for inputs, labels in train_dataloader:
@@ -102,6 +105,7 @@ def main(args):
             with torch.no_grad():
                 features = feature_extractor(inputs)
                 memory_bank.update(features, labels)
+                output_memory_bank.update(outputs.detach, labels)
 
         scheduler.step() # Update the learning rate
         # Evaluate on the validation set
@@ -139,12 +143,13 @@ def main(args):
 
             # Compute similarity
             features = feature_extractor(inputs)
-            similarity = memory_bank.compute_similarity(features)
+            similarity = output_memory_bank.compute_similarity(outputs.detach())
 
             # Update the memory bank
             with torch.no_grad():
                 features = feature_extractor(inputs)
                 memory_bank.update(features, labels)
+                output_memory_bank.update(outputs, labels)
 
             # Compute loss with similarity
             # The similarity is used in the adaptive clustering loss
