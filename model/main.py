@@ -13,6 +13,7 @@ from argument_parser import create_arg_parser
 from plot import plotLoss
 from torch.optim.lr_scheduler import StepLR
 from feature_extractor import FeatureExtractor
+from memory import MemoryBank
 
 
 def main(args):
@@ -60,8 +61,9 @@ def main(args):
     ac_losses = []
     es_losses = []
 
-    # Initialize the feature extractor
+    # Initialize the feature extractor and memory bank
     feature_extractor = FeatureExtractor(base_model)
+    memory_bank = MemoryBank(1000, 2048, device='cpu')
 
     # Train the model
     for epoch in range(args.epochs):  # Assuming you want to train for 10 epochs
@@ -69,8 +71,6 @@ def main(args):
             optimizer.zero_grad()
             outputs = base_model(inputs)
             loss, ce_loss, ac_loss, es_loss = criterion(outputs, labels)  
-
-            features = feature_extractor(inputs)
             
             # Save the losses
             ce_losses.append(ce_loss.item())
@@ -79,6 +79,11 @@ def main(args):
 
             loss.backward()
             optimizer.step()
+
+            # Update the memory bank
+            with torch.no_grad():
+                features = feature_extractor(inputs)
+                memory_bank.update(features, labels)
 
         scheduler.step() # Update the learning rate
         # Evaluate on the validation set
