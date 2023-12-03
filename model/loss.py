@@ -9,9 +9,53 @@ def cross_entropy(y_true, y_pred):
     # It also expects y_true to be a 1D tensor of class indices
 
 
-def adaptive_clustering(y_true, y_pred):
-    # Replace this with your actual implementation
-    return torch.mean(y_pred - y_true)
+# Takes a list of numbers and sorts them in descending order. The returned list
+# is this sorted list but the elements are tuples of 2 where the first element is
+# the index of the second in the original list
+def sort_with_index(lst):
+    # Enumerate the list to create tuples of (index, element)
+    indexed_list = list(enumerate(lst))
+
+    # Sort the indexed list based on the second element (the actual value)
+    sorted_list = sorted(indexed_list, key=lambda x: x[1], reverse=True)
+
+    # index is the first element in each tuple
+    return sorted_list
+
+# returns the list of the indices for the top k elements
+def top_k(lst,k):
+  sorted_lst=sort_with_index(lst)
+  rank_lst=[]
+  for i in range(k):
+    rank_lst.append(sorted_lst[i][0])
+  return rank_lst
+ 
+
+# Takes the memory of all previous vectors of the CNN and those in the current batch.
+# it uses this these with the indices to be compared and returns the binary cross entropy
+# loss.
+
+def adaptive_clustering(B,bt,k):
+  Loss=0
+
+  # main loop to calculate loss
+  for i in range(len(B)):
+    top_ki=top_k(B[i],k)
+    for j in range(len(bt)):## could use batch size instead of len(bt)
+      top_kj=top_k(bt[j],k)
+      if top_ki==top_kj:
+        sij=1
+      else:
+        sij=0
+      
+      score=np.dot(B[i],bt[j])
+
+      if score!=0:
+        Loss-=(sij*np.log(score)+(1-sij)*np.log(1-score))
+  
+  return Loss
+
+
 
 def entropy_separation(y_pred, rho, m):
     # Assumes that y_pred is the raw output of the model
@@ -38,6 +82,6 @@ def entropy_separation(y_pred, rho, m):
     
     return loss.mean()
 
-def combined_loss(y_true, y_pred, weight, rho, m):
-    total_entropy = cross_entropy(y_true, y_pred) + weight*adaptive_clustering(y_true, y_pred) + weight*entropy_separation(y_pred, rho, m)
-    return total_entropy, cross_entropy(y_true, y_pred), adaptive_clustering(y_true, y_pred), entropy_separation(y_pred, rho, m)
+def combined_loss(y_true, y_pred, weight, rho, m, B, bt, k):
+    total_entropy = cross_entropy(y_true, y_pred) + weight*adaptive_clustering(B, bt, k) + weight*entropy_separation(y_pred, rho, m)
+    return total_entropy, cross_entropy(y_true, y_pred), adaptive_clustering(B, bt, k), entropy_separation(y_pred, rho, m)
