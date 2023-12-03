@@ -9,49 +9,54 @@ from torch.utils.data import DataLoader, TensorDataset
 from load import load_and_preprocess_data, load_labels
 from loss import combined_loss
 from test import test_model
-from argument_parser import create_arg_parser
 from plot import plotLoss, plotAccuracy
 from torch.optim.lr_scheduler import StepLR
 from feature_extractor import FeatureExtractor
 from memory import MemoryBank
+import yaml
 
 
 def main(args):
+    # Load configuration
+    with open('Data/Config.yaml', 'r') as file:
+        config = yaml.safe_load(file)
+    batch_size = config['batch_size']
+    num_classes = config['num_classes']
     # Load data
-    train_data = load_and_preprocess_data(args.data_path)
-    target_data = load_and_preprocess_data("Data\images_Y1_test_150.npy")
+    train_data = load_and_preprocess_data(config['train_data_path'])
+    target_data = load_and_preprocess_data(config['target_data_path'])
     # Assumes the data is of the shape (num_images, height, width, channels)
     # ResNet50 expects image that are 224x224
 
     # Load labels
-    train_labels = load_labels(args.labels_path)
+    train_labels = load_labels(config['train_labels_path'])
 
-    validation_data = load_and_preprocess_data(args.validation_path)
-    validation_labels = load_labels(args.validation_labels_path)
+    validation_data = load_and_preprocess_data(config['validation_data_path'])
+    validation_labels = load_labels(config['validation_labels_path'])
 
 
     # Create a DataLoader for your training data
     train_dataset = TensorDataset(train_data, train_labels)
-    train_dataloader = DataLoader(train_dataset, batch_size=32)
+    train_dataloader = DataLoader(train_dataset, batch_size)
 
     # Create a DataLoader for your validation data
     val_dataset = TensorDataset(validation_data, validation_labels)
-    val_dataloader = DataLoader(val_dataset, batch_size=32)
+    val_dataloader = DataLoader(val_dataset, batch_size)
 
     # Create a DataLoader for your target training data
     target_train_dataset = TensorDataset(target_data, train_labels)
-    target_train_dataloader = DataLoader(target_train_dataset, batch_size=32)
+    target_train_dataloader = DataLoader(target_train_dataset, batch_size)
 
     # Load ResNet50 model without top layer
     # I'm setting pretrained to False because I believe that the paper did not use a pretained model
     # If we need to, we can re-enable this later
     base_model = models.resnet50(pretrained=False)
     num_ftrs = base_model.fc.in_features
-    base_model.fc = nn.Linear(num_ftrs, args.num_classes)  # replace 3 with your number of classes
+    base_model.fc = nn.Linear(num_ftrs, num_classes)  # replace 3 with your number of classes
 
     # Define the loss function and optimizer
-    criterion = lambda outputs, labels: combined_loss(labels, outputs, args.loss_weight, args.rho, args.m)
-    optimizer = optim.SGD(base_model.parameters(), lr=args.lr, momentum=args.momentum, nesterov=True)
+    criterion = lambda outputs, labels: combined_loss(labels, outputs, config['loss_weight'], config['rho'], config['m'])
+    optimizer = optim.SGD(base_model.parameters(), lr=config['learning_rate'], momentum=config['momentum'], nesterov=True)
 
     # Define the scheduler
     # This will decrease the learning rate by a factor of 0.1 every 10 epochs
@@ -65,7 +70,7 @@ def main(args):
     ce_losses = []
     ac_losses = []
     es_losses = []
-    class_accuracies = [[] for _ in range(args.num_classes)]
+    class_accuracies = [[] for _ in range(num_classes)]
 
     # Initialize the feature extractor and memory bank
     feature_extractor = FeatureExtractor(base_model)
@@ -80,10 +85,10 @@ def main(args):
     # If anything, we'll more likely have to increase this number.
 
     # Create a separate memory bank for the output vectors
-    output_memory_bank = MemoryBank(1000, args.num_classes, device='cpu')
+    output_memory_bank = MemoryBank(1000, num_classes, device='cpu')
 
     # Train the model
-    for epoch in range(args.epochs):  # Assuming you want to train for 10 epochs
+    for epoch in range(config['source_epochs']):  # Assuming you want to train for 10 epochs
         for inputs, labels in train_dataloader:
             optimizer.zero_grad()
             outputs = base_model(inputs)
@@ -113,15 +118,15 @@ def main(args):
         base_model.eval()
 
         with torch.no_grad():
-            correct = [0]*args.num_classes
-            total = [0]*args.num_classes
+            correct = [0]*num_classes
+            total = [0]*num_classes
             for inputs, labels in val_dataloader:
                 outputs = base_model(inputs)
                 _, predicted = torch.max(outputs.data, 1)
-            for i in range(args.num_classes):
+            for i in range(num_classes):
                 correct[i] += (predicted[labels == i] == labels[labels == i]).sum().item()
                 total[i] += (labels == i).sum().item()
-        accuracies = [correct[i] / total[i] if total[i] > 0 else 0 for i in range(args.num_classes)]
+        accuracies = [correct[i] / total[i] if total[i] > 0 else 0 for i in range(num_classes)]
         class_accuracies.append(accuracies)
 
         # Check for improvement
@@ -141,7 +146,7 @@ def main(args):
         base_model.train()
 
     # Adapt the model to the target domain
-    for epoch in range(args.epochs):  
+    for epoch in range(config['target_epochs']):  
         for inputs, labels in target_train_dataloader:
             optimizer.zero_grad()
             outputs = base_model(inputs)
@@ -171,15 +176,10 @@ def main(args):
 
     # Save Loss and Accuracy Plots
     plotLoss(ce_losses, ac_losses, es_losses)
-    plotAccuracy(class_accuracies, args.num_classes)
+    plotAccuracy(class_accuracies, num_classes)
 
     # Save the model
     # torch.save(base_model.state_dict(), 'trained_model.pt')
 
     # Test the model
     ## test_model(base_model)  # Uncomment this line to test your model
-
-if __name__ == 'main':
-    parser=create_arg_parser()
-    args=parser.parse_args()
-    main(args)
