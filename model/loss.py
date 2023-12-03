@@ -82,6 +82,6 @@ def entropy_separation(y_pred, rho, m):
     
     return loss.mean()
 
-def combined_loss(y_true, y_pred, weight, rho, m):
-    total_entropy = cross_entropy(y_true, y_pred) + weight*adaptive_clustering(y_true, y_pred) + weight*entropy_separation(y_pred, rho, m)
-    return total_entropy, cross_entropy(y_true, y_pred), adaptive_clustering(y_true, y_pred), entropy_separation(y_pred, rho, m)
+def combined_loss(y_true, y_pred, weight, rho, m, B, bt, k):
+    total_entropy = cross_entropy(y_true, y_pred) + weight*adaptive_clustering(B, bt, k) + weight*entropy_separation(y_pred, rho, m)
+    return total_entropy, cross_entropy(y_true, y_pred), adaptive_clustering(B, bt, k), entropy_separation(y_pred, rho, m)
