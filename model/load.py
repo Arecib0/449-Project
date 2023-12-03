@@ -9,9 +9,8 @@ def load_and_preprocess_data(filepath):
     :param filepath: Path to data
     :return: Preprocessed data in form of PyTorch tensor of shape (N, C, H, W)
     """
-    data_list = np.load(filepath)
-    data = np.stack(data_list, axis=0)  # Convert list of arrays to array of arrays
-    data = np.transpose(data, (0, 3, 1, 2))  # Change data from (N, H, W, C) to (N, C, H, W)
+    data = np.load(filepath)
+    data = data.transpose(0, 2, 3, 1)
 
     # Define the preprocessing steps
     preprocess = Compose([
@@ -20,7 +19,9 @@ def load_and_preprocess_data(filepath):
         Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # Normalize data
     ])
         # Apply the preprocessing steps to each image
-    data = torch.stack([preprocess(Image.fromarray(img)) for img in data])
+    data = torch.stack([preprocess(Image.fromarray(img.astype('uint8'))) for img in data])
+    # Change data from (N, H, W, C) to (N, C, H, W)
+    data = data.transpose(1, 3).transpose(1, 2)
 
     return data
 

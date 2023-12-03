@@ -16,19 +16,22 @@ from memory import MemoryBank
 import yaml
 
 
-def main(args):
+def main():
     # Load configuration
+    print("Did we get here????")
     with open('Data/Config.yaml', 'r') as file:
         config = yaml.safe_load(file)
     batch_size = config['batch_size']
     num_classes = config['num_classes']
     # Load data
+    
     train_data = load_and_preprocess_data(config['train_data_path'])
     target_data = load_and_preprocess_data(config['target_data_path'])
     # Assumes the data is of the shape (num_images, height, width, channels)
     # ResNet50 expects image that are 224x224
 
     # Load labels
+    
     train_labels = load_labels(config['train_labels_path'])
 
     validation_data = load_and_preprocess_data(config['validation_data_path'])
@@ -50,7 +53,7 @@ def main(args):
     # Create a DataLoader for your target training data
     target_train_dataset = TensorDataset(target_data, train_labels)
     target_train_dataloader = DataLoader(target_train_dataset, batch_size)
-
+    print("What about here?")
     # Load ResNet50 model without top layer
     # I'm setting pretrained to False because I believe that the paper did not use a pretained model
     # If we need to, we can re-enable this later
@@ -93,6 +96,7 @@ def main(args):
     # label_memory_bank = MemoryBank(1000, args.num_classes, device='cpu')
 
     # Train the model
+    print("Did we get here?")
     for epoch in range(config['source_epochs']):  # Assuming you want to train for 10 epochs
         for inputs, labels in train_dataloader:
             optimizer.zero_grad()
