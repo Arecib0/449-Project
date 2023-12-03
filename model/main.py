@@ -118,21 +118,17 @@ def main(args):
         base_model.eval()
 
         with torch.no_grad():
-            correct = [0]*num_classes
-            total = [0]*num_classes
+            correct = 0
+            total = 0
             for inputs, labels in val_dataloader:
                 outputs = base_model(inputs)
                 _, predicted = torch.max(outputs.data, 1)
-            for i in range(num_classes):
-                correct[i] += (predicted[labels == i] == labels[labels == i]).sum().item()
-                total[i] += (labels == i).sum().item()
-        accuracies = [correct[i] / total[i] if total[i] > 0 else 0 for i in range(num_classes)]
-        class_accuracies.append(accuracies)
-
+                total += labels.size(0)
+                correct += (predicted == labels).sum().item()
+            accuracy = correct / total
         # Check for improvement
-        average_accuracy = sum(accuracies) / len(accuracies)
-        if average_accuracy > best_accuracy:
-            best_accuracy = average_accuracy
+        if accuracy > best_accuracy:
+            best_accuracy = accuracy
             epochs_no_improve = 0
         else:
             epochs_no_improve += 1
@@ -146,7 +142,8 @@ def main(args):
         base_model.train()
 
     # Adapt the model to the target domain
-    for epoch in range(config['target_epochs']):  
+    for epoch in range(config['target_epochs']):
+          
         for inputs, labels in target_train_dataloader:
             optimizer.zero_grad()
             outputs = base_model(inputs)
