@@ -147,6 +147,8 @@ def main(args):
         base_model.train()
 
     # Adapt the model to the target domain
+    best_accuracy = 0.0
+
     for epoch in range(config['target_epochs']):
         for inputs, labels in target_train_dataloader:
             optimizer.zero_grad()
@@ -173,6 +175,8 @@ def main(args):
             loss.backward()
             optimizer.step()
 
+            scheduler.step() # Update the learning rate
+
         with torch.no_grad():
             correct = [0]*num_classes
             total = [0]*num_classes
@@ -184,6 +188,18 @@ def main(args):
                 total[i] += (labels == i).sum().item()
         accuracies = [correct[i] / total[i] if total[i] > 0 else 0 for i in range(num_classes)]
         class_accuracies.append(accuracies)
+
+        average_accuracy = sum(accuracies) / len(accuracies)
+        if average_accuracy > best_accuracy:
+            best_accuracy = average_accuracy
+            epochs_no_improve = 0
+        else:
+            epochs_no_improve += 1
+
+        # Early stopping
+        if epochs_no_improve == 12:
+            print('Early stopping!')
+            break
     
     print('Finished Training')
 
