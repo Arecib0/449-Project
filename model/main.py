@@ -100,6 +100,9 @@ def main():
     print("Did we get here?")
     for epoch in range(config['source_epochs']):  # Assuming you want to train for 10 epochs
         print(epoch)
+        epoch_ce_loss = []
+        epoch_ac_loss = []
+        epoch_es_loss = []
         for inputs, labels in train_dataloader:
             optimizer.zero_grad()
             outputs = base_model(inputs)
@@ -111,9 +114,9 @@ def main():
             # for the labeled source data the class labels are
             # used to generate the similarity labels rather than
             # the output prediction vectors.
-            ce_losses.append(ce_loss.item())
-            ac_losses.append(ac_loss.item())
-            es_losses.append(es_loss.item())
+            epoch_ce_loss.append(ce_loss.item())
+            epoch_ac_loss.append(ac_loss.item())
+            epoch_es_loss.append(es_loss.item())
 
             loss.backward()
             optimizer.step()
@@ -123,6 +126,11 @@ def main():
                 # features = feature_extractor(inputs)
                 # memory_bank.update(features, labels)
                 output_memory_bank.update(outputs.detach(), labels)
+        
+        # Save the epoch losses
+        ce_losses.append(sum(epoch_ce_loss) / len(epoch_ce_loss))
+        ac_losses.append(sum(epoch_ac_loss) / len(epoch_ac_loss))
+        es_losses.append(sum(epoch_es_loss) / len(epoch_es_loss))
         
         scheduler.step() # Update the learning rate
         # Evaluate on the validation set
