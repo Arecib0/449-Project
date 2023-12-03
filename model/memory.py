@@ -3,7 +3,7 @@ import torch.nn.functional as F
 
 class MemoryBank:
     def __init__(self, size, feature_dim, device):
-        self.bank = torch.zeros(size, feature_dim, dtype=torch.int, device=device)
+        self.bank = torch.zeros(size, feature_dim, dtype=torch.float, device=device)
         self.labels = torch.empty(size, dtype=torch.long, device=device)
         self.ptr = 0
 

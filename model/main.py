@@ -19,6 +19,7 @@ import yaml
 def main():
     # Load configuration
     print("Did we get here????")
+    torch.autograd.set_detect_anomaly(True)
     with open('Data/Config.yaml', 'r') as file:
         config = yaml.safe_load(file)
     batch_size = config['batch_size']
@@ -57,12 +58,12 @@ def main():
     # Load ResNet50 model without top layer
     # I'm setting pretrained to False because I believe that the paper did not use a pretained model
     # If we need to, we can re-enable this later
-    base_model = models.resnet50(pretrained=False)
+    base_model = models.resnet50(weights=None)
     num_ftrs = base_model.fc.in_features
     base_model.fc = nn.Linear(num_ftrs, num_classes)  # replace 3 with your number of classes
 
     # Define the loss function and optimizer
-    criterion = lambda outputs, labels, memory: combined_loss(labels, outputs, config['loss_weight]'], config['loss_weight'], config['rho'], config['m'], memory, 3)
+    criterion = lambda outputs, labels, memory: combined_loss(labels, outputs, config['loss_weight'], config['rho'], config['m'], memory, outputs, num_classes)
     optimizer = optim.SGD(base_model.parameters(), lr=config['learning_rate'], momentum=config['momentum'], nesterov=True)
 
     # Define the scheduler
@@ -98,6 +99,7 @@ def main():
     # Train the model
     print("Did we get here?")
     for epoch in range(config['source_epochs']):  # Assuming you want to train for 10 epochs
+        print(epoch)
         for inputs, labels in train_dataloader:
             optimizer.zero_grad()
             outputs = base_model(inputs)
@@ -120,47 +122,46 @@ def main():
             with torch.no_grad():
                 # features = feature_extractor(inputs)
                 # memory_bank.update(features, labels)
-                output_memory_bank.update(outputs.detach, labels)
-
+                output_memory_bank.update(outputs.detach(), labels)
+        
         scheduler.step() # Update the learning rate
         # Evaluate on the validation set
-        base_model.eval()
+        # base_model.eval()
+        # print("I'm gonna VALIDATE")
+        # with torch.no_grad():
+        #     correct = 0
+        #     total = 0
+        #     for inputs, labels in val_dataloader:
+        #         outputs = base_model(inputs)
+        #         _, predicted = torch.max(outputs.data, 1)
+        #         total += labels.size(0)
+        #         correct += (predicted == labels).sum().item()
+        #     accuracy = correct / total
+        # # Check for improvement
+        # if accuracy > best_accuracy:
+        #     best_accuracy = accuracy
+        #     epochs_no_improve = 0
+        # else:
+        #     epochs_no_improve += 1
 
-        with torch.no_grad():
-            correct = 0
-            total = 0
-            for inputs, labels in val_dataloader:
-                outputs = base_model(inputs)
-                _, predicted = torch.max(outputs.data, 1)
-                total += labels.size(0)
-                correct += (predicted == labels).sum().item()
-            accuracy = correct / total
-        # Check for improvement
-        if accuracy > best_accuracy:
-            best_accuracy = accuracy
-            epochs_no_improve = 0
-        else:
-            epochs_no_improve += 1
-
-        # Early stopping
-        if epochs_no_improve == 12:
-            print('Early stopping!')
-            break
+        # # Early stopping
+        # if epochs_no_improve == 12:
+        #     print('Early stopping!')
+        #     break
 
         # Switch back to training mode
-        base_model.train()
+        # base_model.train()
 
     # Adapt the model to the target domain
     best_accuracy = 0.0
-
+    print("I'm gonna TARGET")
     for epoch in range(config['target_epochs']):
+        print(epoch)
         for inputs, labels in target_train_dataloader:
             optimizer.zero_grad()
             outputs = base_model(inputs)
-            criterion1=adaptive_clustering()
-            criterion2=entropy_separation()
-            ac_loss=criterion1(output_memory_bank.bank, outputs, 3)
-            es_loss=criterion2(outputs, config['rho'], config['m'])
+            ac_loss=adaptive_clustering(output_memory_bank.bank, outputs, num_classes)
+            es_loss=entropy_separation(outputs, config['rho'], config['m'])
 
             # Update the memory bank
             with torch.no_grad():
@@ -184,7 +185,7 @@ def main():
         with torch.no_grad():
             correct = [0]*num_classes
             total = [0]*num_classes
-            for inputs, labels in val_target_dataloader:
+            for inputs, labels in train_dataloader:
                 outputs = base_model(inputs)
                 _, predicted = torch.max(outputs.data, 1)
             for i in range(num_classes):

@@ -37,22 +37,23 @@ def top_k(lst,k):
 # loss.
 
 def adaptive_clustering(B,bt,k):
-  Loss=0
+  Loss=torch.zeros(1)
+  
 
   # main loop to calculate loss
   for i in range(len(B)):
     top_ki=top_k(B[i],k)
     for j in range(len(bt)):## could use batch size instead of len(bt)
-      top_kj=top_k(bt[j],k)
-      if top_ki==top_kj:
-        sij=1
-      else:
-        sij=0
+        top_kj=top_k(bt[j],k)
+        if top_ki==top_kj:
+            sij=1
+        else:
+            sij=0
       
-      score=np.dot(B[i],bt[j])
-
-      if score!=0:
-        Loss-=(sij*np.log(score)+(1-sij)*np.log(1-score))
+        score=torch.dot(B[i].clone(),bt[j].clone())
+        
+        if score!=0:
+            Loss-=(sij*torch.log(score)+(1-sij)*torch.log(1-score))
   
   return Loss
 

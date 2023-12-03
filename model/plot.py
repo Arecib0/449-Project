@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def plotLoss(ce_losses, ac_losses, es_losses):
@@ -41,9 +42,20 @@ def plotLoss(ce_losses, ac_losses, es_losses):
     plt.close()
 
 def plotAccuracy(class_acc, num_class):
-    class_names = ['Eliptical', 'Spiral', 'Merger']
-    for i in range(num_class):
-        plt.plot(class_acc[i], label=class_names[i])
+    # Assuming class_accuracies is a list of lists where each inner list contains the accuracies for each class for a single epoch
+    class_accuracies_np = np.array(class_acc)
+
+    # Get the number of classes and epochs
+    num_classes = class_accuracies_np.shape[1]
+    num_epochs = class_accuracies_np.shape[0]
+
+    # Create a list of epoch numbers
+    epochs = list(range(num_epochs))
+
+    # Plot the accuracy for each class
+    for i in range(num_classes):
+        plt.plot(epochs, class_accuracies_np[:, i], label=f'Class {i}')
+
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')
     plt.legend()
