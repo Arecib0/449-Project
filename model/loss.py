@@ -3,11 +3,9 @@ import torch.nn.functional as F
 import numpy as np
 
 def cross_entropy(y_true, y_pred):
-    return F.cross_entropy(y_pred, y_true)
-    # Note: F.cross_entropy combines log_softmax and nll_loss
-    # Because of this, y_pred should be the raw output of the model
-    # Do not apply softmax in the last layer of the model
-    # It also expects y_true to be a 1D tensor of class indices
+    # Apply log to the predictions because nn.NLLLoss expects log probabilities
+    y_pred_log = torch.log(y_pred)
+    return F.nll_loss(y_pred_log, y_true)
 
 
 # Takes a list of numbers and sorts them in descending order. The returned list
@@ -38,7 +36,8 @@ def top_k(lst,k):
 
 def adaptive_clustering(B,bt,k):
   Loss=torch.zeros(1)
-  
+  count=0
+  eps=1e-9
 
   # main loop to calculate loss
   for i in range(len(B)):
@@ -50,12 +49,25 @@ def adaptive_clustering(B,bt,k):
         else:
             sij=0
       
-        score=torch.dot(B[i].clone(),bt[j].clone())
+        # Calculate the dot product of the vectors
+        score=torch.dot(B[i], bt[j])
         
         if score!=0:
-            Loss-=(sij*torch.log(score)+(1-sij)*torch.log(1-score))
+            Loss-=(sij*torch.log(score+eps)+(1-sij)*torch.log(1-score+eps))
+            count+=1
+        
+        if score<0:
+           print('You have a negative score. In theory, this should not happen.')
+           print("if you're seeing this, something has gone very wrong.")
+           print('Score:', score)
   
-  return Loss
+  # Calculate the mean loss
+  if count > 0:
+      mean_loss = Loss / count
+  else:
+      mean_loss = Loss
+  
+  return mean_loss
 
 
 
@@ -67,7 +79,7 @@ def entropy_separation(y_pred, rho, m):
     # in this function, so you don't need to apply softmax in the last layer of the model
 
     # Apply softmax to convert raw output to probabilities
-    y_pred = torch.softmax(y_pred, dim=1)
+    # y_pred = torch.softmax(y_pred, dim=1)
 
     # Calculate entropy of the predictions
     p_log_p = y_pred * torch.log(y_pred + 1e-9)  # add a small constant to avoid log(0)
