@@ -143,7 +143,6 @@ def main(args):
 
     # Adapt the model to the target domain
     for epoch in range(config['target_epochs']):
-          
         for inputs, labels in target_train_dataloader:
             optimizer.zero_grad()
             outputs = base_model(inputs)
@@ -168,6 +167,18 @@ def main(args):
             loss = criterion(outputs, labels, similarity)  
             loss.backward()
             optimizer.step()
+
+        with torch.no_grad():
+            correct = [0]*num_classes
+            total = [0]*num_classes
+            for inputs, labels in val_dataloader:
+                outputs = base_model(inputs)
+                _, predicted = torch.max(outputs.data, 1)
+            for i in range(num_classes):
+                correct[i] += (predicted[labels == i] == labels[labels == i]).sum().item()
+                total[i] += (labels == i).sum().item()
+        accuracies = [correct[i] / total[i] if total[i] > 0 else 0 for i in range(num_classes)]
+        class_accuracies.append(accuracies)
     
     print('Finished Training')
 
