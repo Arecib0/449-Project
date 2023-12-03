@@ -50,7 +50,7 @@ def adaptive_clustering(B,bt,k):
             sij=0
       
         # Calculate the dot product of the vectors
-        score=torch.dot(B[i], bt[j])
+        score=torch.dot(B[i].clone(), bt[j].clone())
         
         if score!=0:
             Loss-=(sij*torch.log(score+eps)+(1-sij)*torch.log(1-score+eps))

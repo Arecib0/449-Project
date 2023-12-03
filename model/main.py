@@ -23,6 +23,7 @@ def main():
         config = yaml.safe_load(file)
     batch_size = config['batch_size']
     num_classes = config['num_classes']
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     # Load data
     
     train_data = load_and_preprocess_data(config['train_data_path'])
@@ -41,22 +42,23 @@ def main():
 
 
     # Create a DataLoader for your training data
-    train_dataset = TensorDataset(train_data, train_labels)
+    train_dataset = TensorDataset(train_data.to(device), train_labels.to(device))
     train_dataloader = DataLoader(train_dataset, batch_size)
 
     # Create a DataLoader for your validation data
-    val_dataset = TensorDataset(validation_data, validation_labels)
+    val_dataset = TensorDataset(validation_data.to(device), validation_labels.to(device))
     val_dataloader = DataLoader(val_dataset, batch_size)
-    val_target_dataset=TensorDataset(validation_target_data,validation_target_labels)
+    val_target_dataset=TensorDataset(validation_target_data.to(device),validation_target_labels.to(device))
     val_target_dataloader=DataLoader(val_target_dataset, batch_size)
 
     # Create a DataLoader for your target training data
-    target_train_dataset = TensorDataset(target_data, train_labels)
+    target_train_dataset = TensorDataset(target_data.to(device), train_labels.to(device))
     target_train_dataloader = DataLoader(target_train_dataset, batch_size)
     # Load ResNet50 model without top layer
     # I'm setting pretrained to False because I believe that the paper did not use a pretained model
     # If we need to, we can re-enable this later
     base_model = models.resnet50(weights=None)
+    base_model = base_model.to(device)
     num_ftrs = base_model.fc.in_features
     base_model.fc = nn.Sequential(
         nn.Linear(num_ftrs, num_classes),  # replace num_classes with your number of classes
@@ -171,9 +173,7 @@ def main():
     for epoch in range(config['target_epochs']):
         print(epoch)
         correct = [0]*num_classes
-        print(correct)
         total = [0]*num_classes
-        print(total)
         for inputs, labels in target_train_dataloader:
             optimizer.zero_grad()
             outputs = base_model(inputs)
@@ -220,7 +220,7 @@ def main():
     plotAccuracy(class_accuracies, num_classes)
 
     # Save the model
-    # torch.save(base_model.state_dict(), 'trained_model.pt')
+    torch.save(base_model.state_dict(), 'trained_model.pt')
 
     # Test the model
     ## test_model(base_model)  # Uncomment this line to test your model

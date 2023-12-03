@@ -36,6 +36,7 @@ def load_labels(filepath):
     labels = np.load(filepath) 
     labels = torch.tensor(labels, dtype=torch.long)
     labels = torch.argmax(labels, dim=1)  # Convert one-hot encoding to class number
-    
+    print(labels.shape)
+
     return labels
 
