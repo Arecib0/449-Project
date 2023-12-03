@@ -11,7 +11,6 @@ from loss import *
 from test import test_model
 from plot import plotLoss, plotAccuracy
 from torch.optim.lr_scheduler import StepLR
-from feature_extractor import FeatureExtractor
 from memory import MemoryBank
 import yaml
 
