@@ -28,6 +28,8 @@ def main(args):
 
     validation_data = load_and_preprocess_data(args.validation_path)
     validation_labels = load_labels(args.validation_labels_path)
+    validation_target_data=load_and_preprocess_data('Data\images_Y1_valid.npy')
+    validation_target_labels=load_labels('Data\labels_valid.npy')
 
 
     # Create a DataLoader for your training data
@@ -37,6 +39,8 @@ def main(args):
     # Create a DataLoader for your validation data
     val_dataset = TensorDataset(validation_data, validation_labels)
     val_dataloader = DataLoader(val_dataset, batch_size=32)
+    val_target_dataset=TensorDataset(validation_target_data,validation_target_labels)
+    val_target_dataloader=DataLoader(val_target_dataset,batch_size=32)
 
     # Create a DataLoader for your target training data
     target_train_dataset = TensorDataset(target_data, train_labels)
@@ -161,6 +165,34 @@ def main(args):
             loss = criterion(outputs, labels, similarity)  
             loss.backward()
             optimizer.step()
+
+        # Evaluate on the validation set
+        scheduler.step() # Update the learning rate
+        base_model.eval()
+
+        with torch.no_grad():
+            correct = 0
+            total = 0
+            for inputs, labels in val_target_dataloader:
+                outputs = base_model(inputs)
+                _, predicted = torch.max(outputs.data, 1)
+                total += labels.size(0)
+                correct += (predicted == labels).sum().item()
+            accuracy = correct / total
+        # Check for improvement
+        if accuracy > best_accuracy:
+            best_accuracy = accuracy
+            epochs_no_improve = 0
+        else:
+            epochs_no_improve += 1
+
+        # Early stopping
+        if epochs_no_improve == 12:
+            print('Early stopping!')
+            break
+
+        # Switch back to training mode
+        base_model.train()
     
     print('Finished Training')
 
