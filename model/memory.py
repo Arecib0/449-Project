@@ -14,8 +14,3 @@ class MemoryBank:
             if labels is not None:
                 self.labels[self.ptr:self.ptr+batch_size] = labels
             self.ptr = (self.ptr + batch_size) % self.bank.size(0)
-
-    def compute_similarity(self, features):
-        # Compute the dot product similarity
-        similarity = torch.mm(features, self.bank.t())
-        return similarity
