@@ -9,9 +9,11 @@ def load_and_preprocess_data(filepath):
     :param filepath: Path to data
     :return: Preprocessed data in form of PyTorch tensor of shape (N, C, H, W)
     """
-    data = np.load(filepath)
-    data = data.transpose(0, 2, 3, 1)
-
+    data = np.load(filepath) # loaded data in form (N,C,H,W)=(#samples,colour chans,img height,img width)
+    # dim0=N, dim1=C, dim2=H, dim3=W
+    data = data.transpose(0, 2, 3, 1) # (N,C,H,W)->(N,H,W,C) to be correct format in preprocessing below
+    #(dim0,dim1,dim2,dim3)->(dim0,dim2,dim3,dim1)
+    
     # Define the preprocessing steps
     preprocess = Compose([
         Resize((224, 224)),  # Resize images to 224x224
