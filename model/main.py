@@ -18,7 +18,6 @@ import yaml
 
 def main():
     # Load configuration
-    print("Did we get here????")
     torch.autograd.set_detect_anomaly(True)
     with open('Data/Config.yaml', 'r') as file:
         config = yaml.safe_load(file)
@@ -54,7 +53,6 @@ def main():
     # Create a DataLoader for your target training data
     target_train_dataset = TensorDataset(target_data, train_labels)
     target_train_dataloader = DataLoader(target_train_dataset, batch_size)
-    print("What about here?")
     # Load ResNet50 model without top layer
     # I'm setting pretrained to False because I believe that the paper did not use a pretained model
     # If we need to, we can re-enable this later
@@ -78,7 +76,7 @@ def main():
     ce_losses = []
     ac_losses = []
     es_losses = []
-    class_accuracies = [[] for _ in range(num_classes)]
+    class_accuracies = []
 
     # Initialize the feature extractor and memory bank
     # feature_extractor = FeatureExtractor(base_model)
@@ -97,7 +95,7 @@ def main():
     # label_memory_bank = MemoryBank(1000, args.num_classes, device='cpu')
 
     # Train the model
-    print("Did we get here?")
+    print("Starting Training")
     for epoch in range(config['source_epochs']):  # Assuming you want to train for 10 epochs
         print(epoch)
         epoch_ce_loss = []
@@ -161,10 +159,13 @@ def main():
         # base_model.train()
 
     # Adapt the model to the target domain
-    best_accuracy = 0.0
-    print("I'm gonna TARGET")
+    print("Begining target domain adaptation")
     for epoch in range(config['target_epochs']):
         print(epoch)
+        correct = [0]*num_classes
+        print(correct)
+        total = [0]*num_classes
+        print(total)
         for inputs, labels in target_train_dataloader:
             optimizer.zero_grad()
             outputs = base_model(inputs)
@@ -189,30 +190,20 @@ def main():
             optimizer.step()
 
             scheduler.step() # Update the learning rate
-
-        with torch.no_grad():
-            correct = [0]*num_classes
-            total = [0]*num_classes
-            for inputs, labels in train_dataloader:
-                outputs = base_model(inputs)
-                _, predicted = torch.max(outputs.data, 1)
+            _, predicted = torch.max(outputs.data, 1)
             for i in range(num_classes):
                 correct[i] += (predicted[labels == i] == labels[labels == i]).sum().item()
                 total[i] += (labels == i).sum().item()
-        accuracies = [correct[i] / total[i] if total[i] > 0 else 0 for i in range(num_classes)]
-        class_accuracies.append(accuracies)
+            
 
-        average_accuracy = sum(accuracies) / len(accuracies)
-        if average_accuracy > best_accuracy:
-            best_accuracy = average_accuracy
-            epochs_no_improve = 0
-        else:
-            epochs_no_improve += 1
+        with torch.no_grad():
+            accuracies = [correct[i] / total[i] if total[i] > 0 else 0 for i in range(num_classes)]
+            if len(accuracies) < num_classes:
+                accuracies += [0] * (num_classes - len(accuracies))
+            class_accuracies.append(accuracies)
+            print(class_accuracies)
 
-        # Early stopping
-        if epochs_no_improve == 12:
-            print('Early stopping!')
-            break
+
     
     print('Finished Training')
 
