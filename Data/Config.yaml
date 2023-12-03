@@ -3,6 +3,8 @@ target_data_path: "path_to_your_target_data"
 labels_path: "path_to_your_labels"
 validation_data_path: "path_to_your_validation_data"
 validation_labels_path: "path_to_your_validation_labels"
+validation_target_data_path: "path_to_your_validation_target_data"
+validation_target_labels_path: "path_to_your_validation_target_labels"
 num_classes: 3
 batch_size: 36
 source_epochs: 10

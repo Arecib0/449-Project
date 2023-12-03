@@ -33,8 +33,8 @@ def main(args):
 
     validation_data = load_and_preprocess_data(config['validation_data_path'])
     validation_labels = load_labels(config['validation_labels_path'])
-    validation_target_data=load_and_preprocess_data('Data\images_Y1_valid.npy')
-    validation_target_labels=load_labels('Data\labels_valid.npy')
+    validation_target_data=load_and_preprocess_data(config['validation_target_data_path'])
+    validation_target_labels=load_labels(config['validation_target_labels_path'])
 
 
     # Create a DataLoader for your training data
@@ -45,7 +45,7 @@ def main(args):
     val_dataset = TensorDataset(validation_data, validation_labels)
     val_dataloader = DataLoader(val_dataset, batch_size)
     val_target_dataset=TensorDataset(validation_target_data,validation_target_labels)
-    val_target_dataloader=DataLoader(val_target_dataset,batch_size=32)
+    val_target_dataloader=DataLoader(val_target_dataset, batch_size)
 
     # Create a DataLoader for your target training data
     target_train_dataset = TensorDataset(target_data, train_labels)
@@ -154,11 +154,7 @@ def main(args):
             criterion1=adaptive_clustering()
             criterion2=entropy_separation()
             ac_loss=criterion1(output_memory_bank.bank, outputs, 3)
-            es_loss=criterion2(outputs, args.rho, args.m)
-
-            # Compute similarity
-            # features = feature_extractor(inputs)
-            similarity = output_memory_bank.compute_similarity(outputs.detach())
+            es_loss=criterion2(outputs, config['rho'], config['m'])
 
             # Update the memory bank
             with torch.no_grad():
@@ -180,7 +176,7 @@ def main(args):
         with torch.no_grad():
             correct = [0]*num_classes
             total = [0]*num_classes
-            for inputs, labels in val_dataloader:
+            for inputs, labels in val_target_dataloader:
                 outputs = base_model(inputs)
                 _, predicted = torch.max(outputs.data, 1)
             for i in range(num_classes):
