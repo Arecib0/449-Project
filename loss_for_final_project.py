@@ -44,7 +44,7 @@ def adaptive_clustering(B,bt,k):
         sij=0
       
       score=np.dot(B[i],bt[j])
-      loss-=(sij*np.log(score)+(1-sij)*np.log(1-score))
+      Loss-=(sij*np.log(score)+(1-sij)*np.log(1-score))
   
   return Loss
 
