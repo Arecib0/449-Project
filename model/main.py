@@ -43,7 +43,7 @@ def main(args):
     val_target_dataloader=DataLoader(val_target_dataset,batch_size=32)
 
     # Create a DataLoader for your target training data
-    target_train_dataset = TensorDataset(target_data, train_labels)
+    target_train_dataset = TensorDataset(target_data)
     target_train_dataloader = DataLoader(target_train_dataset, batch_size=32)
 
     # Load ResNet50 model without top layer
@@ -71,8 +71,8 @@ def main(args):
     es_losses = []
 
     # Initialize the feature extractor and memory bank
-    feature_extractor = FeatureExtractor(base_model)
-    memory_bank = MemoryBank(1000, 2048, device='cpu')
+    # feature_extractor = FeatureExtractor(base_model)
+    # memory_bank = MemoryBank(1000, 2048, device='cpu')
     # The 1000 is the size of the memory bank, which is a hyperparameter
     # and determines how many images are stored in the memory bank.
     # Essentially, it's how much memory to allocate for storing the features.
@@ -84,6 +84,7 @@ def main(args):
 
     # Create a separate memory bank for the output vectors
     output_memory_bank = MemoryBank(1000, args.num_classes, device='cpu')
+    label_memory_bank = MemoryBank(1000, args.num_classes, device='cpu')
 
     # Train the model
     for epoch in range(args.epochs):  # Assuming you want to train for 10 epochs
@@ -107,8 +108,8 @@ def main(args):
 
             # Update the memory bank
             with torch.no_grad():
-                features = feature_extractor(inputs)
-                memory_bank.update(features, labels)
+                # features = feature_extractor(inputs)
+                # memory_bank.update(features, labels)
                 output_memory_bank.update(outputs.detach, labels)
 
         scheduler.step() # Update the learning rate
@@ -141,19 +142,19 @@ def main(args):
 
     # Adapt the model to the target domain
     for epoch in range(args.epochs):  
-        for inputs, labels in target_train_dataloader:
+        for inputs in target_train_dataloader:
             optimizer.zero_grad()
             outputs = base_model(inputs)
 
             # Compute similarity
-            features = feature_extractor(inputs)
+            # features = feature_extractor(inputs)
             similarity = output_memory_bank.compute_similarity(outputs.detach())
 
             # Update the memory bank
             with torch.no_grad():
-                features = feature_extractor(inputs)
-                memory_bank.update(features, labels)
-                output_memory_bank.update(outputs, labels)
+                # features = feature_extractor(inputs)
+                # memory_bank.update(features, labels)
+                output_memory_bank.update(outputs)
 
             # Compute loss with similarity
             # The similarity is used in the adaptive clustering loss
@@ -162,7 +163,7 @@ def main(args):
             # use this similarity to compute the loss.
             # I believe that this, combined with the entropy separation
             # loss, is the primary domain adaptation method used in the paper.
-            loss = criterion(outputs, labels, similarity)  
+            loss = criterion(outputs, similarity)  
             loss.backward()
             optimizer.step()
 
