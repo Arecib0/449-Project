@@ -60,7 +60,9 @@ def main():
     # If we need to, we can re-enable this later
     base_model = models.resnet50(weights=None)
     num_ftrs = base_model.fc.in_features
-    base_model.fc = nn.Linear(num_ftrs, num_classes)  # replace 3 with your number of classes
+    base_model.fc = nn.Sequential(
+        nn.Linear(num_ftrs, num_classes),  # replace num_classes with your number of classes
+        nn.Softmax(dim=1))
 
     # Define the loss function and optimizer
     criterion = lambda outputs, labels, memory: combined_loss(labels, outputs, config['loss_weight'], config['rho'], config['m'], memory, outputs, num_classes)
@@ -116,6 +118,7 @@ def main():
             # the output prediction vectors.
             epoch_ce_loss.append(ce_loss.item())
             epoch_ac_loss.append(ac_loss.item())
+            print(ac_loss.item())
             epoch_es_loss.append(es_loss.item())
 
             loss.backward()
@@ -159,6 +162,11 @@ def main():
 
         # Switch back to training mode
         # base_model.train()
+    
+    # print("Breaking early for debugging purposes.")
+    # print("If you're seeing this, it means you forgot to comment out the early stopping code.")
+    # plotLoss(ce_losses, ac_losses, es_losses)
+    # return
 
     # Adapt the model to the target domain
     best_accuracy = 0.0
