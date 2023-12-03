@@ -59,7 +59,7 @@ def main(args):
     base_model.fc = nn.Linear(num_ftrs, num_classes)  # replace 3 with your number of classes
 
     # Define the loss function and optimizer
-    criterion = lambda outputs, labels: combined_loss(labels, outputs, config['loss_weight'], config['rho'], config['m'])
+    criterion = lambda outputs, labels, memory: combined_loss(labels, outputs, config['loss_weight]'], config['loss_weight'], config['rho'], config['m'], memory, 3)
     optimizer = optim.SGD(base_model.parameters(), lr=config['learning_rate'], momentum=config['momentum'], nesterov=True)
 
     # Define the scheduler
@@ -97,7 +97,7 @@ def main(args):
         for inputs, labels in train_dataloader:
             optimizer.zero_grad()
             outputs = base_model(inputs)
-            loss, ce_loss, ac_loss, es_loss = criterion(outputs, labels)  
+            loss, ce_loss, ac_loss, es_loss = criterion(outputs, labels, memory=output_memory_bank.bank)  
             
             # Save the losses
 
