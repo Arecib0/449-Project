@@ -7,7 +7,7 @@ import torch.optim as optim
 from torchvision import models, transforms
 from torch.utils.data import DataLoader, TensorDataset
 from load import load_and_preprocess_data, load_labels
-from loss import combined_loss
+from loss import *
 from test import test_model
 from argument_parser import create_arg_parser
 from plot import plotLoss
@@ -43,7 +43,7 @@ def main(args):
     val_target_dataloader=DataLoader(val_target_dataset,batch_size=32)
 
     # Create a DataLoader for your target training data
-    target_train_dataset = TensorDataset(target_data)
+    target_train_dataset = TensorDataset(target_data, train_labels)
     target_train_dataloader = DataLoader(target_train_dataset, batch_size=32)
 
     # Load ResNet50 model without top layer
@@ -84,7 +84,7 @@ def main(args):
 
     # Create a separate memory bank for the output vectors
     output_memory_bank = MemoryBank(1000, args.num_classes, device='cpu')
-    label_memory_bank = MemoryBank(1000, args.num_classes, device='cpu')
+    # label_memory_bank = MemoryBank(1000, args.num_classes, device='cpu')
 
     # Train the model
     for epoch in range(args.epochs):  # Assuming you want to train for 10 epochs
@@ -142,9 +142,13 @@ def main(args):
 
     # Adapt the model to the target domain
     for epoch in range(args.epochs):  
-        for inputs in target_train_dataloader:
+        for inputs, labels in target_train_dataloader:
             optimizer.zero_grad()
             outputs = base_model(inputs)
+            criterion1=adaptive_clustering()
+            criterion2=entropy_separation()
+            ac_loss=criterion1(output_memory_bank.bank, outputs, 3)
+            es_loss=criterion2(outputs, args.rho, args.m)
 
             # Compute similarity
             # features = feature_extractor(inputs)
@@ -163,7 +167,7 @@ def main(args):
             # use this similarity to compute the loss.
             # I believe that this, combined with the entropy separation
             # loss, is the primary domain adaptation method used in the paper.
-            loss = criterion(outputs, similarity)  
+            loss = ac_loss + es_loss
             loss.backward()
             optimizer.step()
 
