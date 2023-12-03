@@ -12,11 +12,14 @@ from test import test_model
 from argument_parser import create_arg_parser
 from plot import plotLoss
 from torch.optim.lr_scheduler import StepLR
+from feature_extractor import FeatureExtractor
+from memory import MemoryBank
 
 
 def main(args):
     # Load data
     train_data = load_and_preprocess_data(args.data_path)
+    target_data = load_and_preprocess_data("Data\images_Y1_test_150.npy")
     # Assumes the data is of the shape (num_images, height, width, channels)
     # ResNet50 expects image that are 224x224
 
@@ -34,6 +37,10 @@ def main(args):
     # Create a DataLoader for your validation data
     val_dataset = TensorDataset(validation_data, validation_labels)
     val_dataloader = DataLoader(val_dataset, batch_size=32)
+
+    # Create a DataLoader for your target training data
+    target_train_dataset = TensorDataset(target_data, train_labels)
+    target_train_dataloader = DataLoader(target_train_dataset, batch_size=32)
 
     # Load ResNet50 model without top layer
     # I'm setting pretrained to False because I believe that the paper did not use a pretained model
@@ -59,6 +66,21 @@ def main(args):
     ac_losses = []
     es_losses = []
 
+    # Initialize the feature extractor and memory bank
+    feature_extractor = FeatureExtractor(base_model)
+    memory_bank = MemoryBank(1000, 2048, device='cpu')
+    # The 1000 is the size of the memory bank, which is a hyperparameter
+    # and determines how many images are stored in the memory bank.
+    # Essentially, it's how much memory to allocate for storing the features.
+    # I'm not sure what number would be best for your machine when you're
+    # training the model, since I don't know how much memory you have.
+    # If you run out of memory, you can try reducing this number.
+    # But honestly, I don't think it will be a problem.
+    # If anything, we'll more likely have to increase this number.
+
+    # Create a separate memory bank for the output vectors
+    output_memory_bank = MemoryBank(1000, args.num_classes, device='cpu')
+
     # Train the model
     for epoch in range(args.epochs):  # Assuming you want to train for 10 epochs
         for inputs, labels in train_dataloader:
@@ -67,12 +89,23 @@ def main(args):
             loss, ce_loss, ac_loss, es_loss = criterion(outputs, labels)  
             
             # Save the losses
+
+            # When the adaptive clustering loss is implemented,
+            # for the labeled source data the class labels are
+            # used to generate the similarity labels rather than
+            # the output prediction vectors.
             ce_losses.append(ce_loss.item())
             ac_losses.append(ac_loss.item())
             es_losses.append(es_loss.item())
 
             loss.backward()
             optimizer.step()
+
+            # Update the memory bank
+            with torch.no_grad():
+                features = feature_extractor(inputs)
+                memory_bank.update(features, labels)
+                output_memory_bank.update(outputs.detach, labels)
 
         scheduler.step() # Update the learning rate
         # Evaluate on the validation set
@@ -101,6 +134,33 @@ def main(args):
 
         # Switch back to training mode
         base_model.train()
+
+    # Adapt the model to the target domain
+    for epoch in range(args.epochs):  
+        for inputs, labels in target_train_dataloader:
+            optimizer.zero_grad()
+            outputs = base_model(inputs)
+
+            # Compute similarity
+            features = feature_extractor(inputs)
+            similarity = output_memory_bank.compute_similarity(outputs.detach())
+
+            # Update the memory bank
+            with torch.no_grad():
+                features = feature_extractor(inputs)
+                memory_bank.update(features, labels)
+                output_memory_bank.update(outputs, labels)
+
+            # Compute loss with similarity
+            # The similarity is used in the adaptive clustering loss
+            # which is at this point unwritten.
+            # When Eric writes the adaptive clustering loss, he can
+            # use this similarity to compute the loss.
+            # I believe that this, combined with the entropy separation
+            # loss, is the primary domain adaptation method used in the paper.
+            loss = criterion(outputs, labels, similarity)  
+            loss.backward()
+            optimizer.step()
     
     print('Finished Training')
 
@@ -108,7 +168,7 @@ def main(args):
     plotLoss(ce_losses, ac_losses, es_losses)
 
     # Save the model
-    torch.save(base_model.state_dict(), 'trained_model.pt')
+    # torch.save(base_model.state_dict(), 'trained_model.pt')
 
     # Test the model
     ## test_model(base_model)  # Uncomment this line to test your model
