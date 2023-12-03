@@ -216,3 +216,5 @@ def main():
 
     # Test the model
     ## test_model(base_model)  # Uncomment this line to test your model
+if __name__ == '__main__':
+    main()

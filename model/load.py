@@ -21,7 +21,7 @@ def load_and_preprocess_data(filepath):
         # Apply the preprocessing steps to each image
     data = torch.stack([preprocess(Image.fromarray(img.astype('uint8'))) for img in data])
     # Change data from (N, H, W, C) to (N, C, H, W)
-    data = data.transpose(1, 3).transpose(1, 2)
+    data = data.permute(0, 3, 1, 2)
 
     return data
 
