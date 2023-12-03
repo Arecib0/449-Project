@@ -14,3 +14,4 @@ class MemoryBank:
             if labels is not None:
                 self.labels[self.ptr:self.ptr+batch_size] = labels
             self.ptr = (self.ptr + batch_size) % self.bank.size(0)
+
