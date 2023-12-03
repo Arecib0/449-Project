@@ -39,4 +39,12 @@ def plotLoss(ce_losses, ac_losses, es_losses):
     plt.legend()
     plt.savefig('Output/es_loss_plot.png')
     plt.close()
-    
+
+def plotAccuracy(class_acc, num_class):
+    class_names = ['Eliptical', 'Spiral', 'Merger']
+    for i in range(num_class):
+        plt.plot(class_acc[i], label=class_names[i])
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy')
+    plt.legend()
+    plt.savefig('Output/class_acc_plot.png')
