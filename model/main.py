@@ -10,7 +10,7 @@ from load import load_and_preprocess_data, load_labels
 from loss import combined_loss
 from test import test_model
 from argument_parser import create_arg_parser
-from plot import plotLoss
+from plot import plotLoss, plotAccuracy
 from torch.optim.lr_scheduler import StepLR
 from feature_extractor import FeatureExtractor
 from memory import MemoryBank
@@ -65,6 +65,7 @@ def main(args):
     ce_losses = []
     ac_losses = []
     es_losses = []
+    class_accuracies = [[] for _ in range(args.num_classes)]
 
     # Initialize the feature extractor and memory bank
     feature_extractor = FeatureExtractor(base_model)
@@ -112,17 +113,21 @@ def main(args):
         base_model.eval()
 
         with torch.no_grad():
-            correct = 0
-            total = 0
+            correct = [0]*args.num_classes
+            total = [0]*args.num_classes
             for inputs, labels in val_dataloader:
                 outputs = base_model(inputs)
                 _, predicted = torch.max(outputs.data, 1)
-                total += labels.size(0)
-                correct += (predicted == labels).sum().item()
-            accuracy = correct / total
+            for i in range(args.num_classes):
+                correct[i] += (predicted[labels == i] == labels[labels == i]).sum().item()
+                total[i] += (labels == i).sum().item()
+        accuracies = [correct[i] / total[i] if total[i] > 0 else 0 for i in range(args.num_classes)]
+        class_accuracies.append(accuracies)
+
         # Check for improvement
-        if accuracy > best_accuracy:
-            best_accuracy = accuracy
+        average_accuracy = sum(accuracies) / len(accuracies)
+        if average_accuracy > best_accuracy:
+            best_accuracy = average_accuracy
             epochs_no_improve = 0
         else:
             epochs_no_improve += 1
@@ -164,8 +169,9 @@ def main(args):
     
     print('Finished Training')
 
-    # Save Loss
+    # Save Loss and Accuracy Plots
     plotLoss(ce_losses, ac_losses, es_losses)
+    plotAccuracy(class_accuracies, args.num_classes)
 
     # Save the model
     # torch.save(base_model.state_dict(), 'trained_model.pt')
