@@ -16,35 +16,36 @@ import yaml
 
 
 def main():
-    # Load configuration
     torch.autograd.set_detect_anomaly(True)
+    
+    # Bring in hyperparameters and pathes
     with open('Data/Config.yaml', 'r') as file:
         config = yaml.safe_load(file)
     batch_size = config['batch_size']
     num_classes = config['num_classes']
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    # Load data
     
+    # Load data that can be fed into Resnet50
     train_data = load_and_preprocess_data(config['train_data_path'])
     target_data = load_and_preprocess_data(config['target_data_path'])
     # Assumes the data is of the shape (num_images, height, width, channels)
     # ResNet50 expects image that are 224x224
 
     # Load labels
-    
     train_labels = load_labels(config['train_labels_path'])
 
+    # Load validation data
     validation_data = load_and_preprocess_data(config['validation_data_path'])
     validation_labels = load_labels(config['validation_labels_path'])
     validation_target_data=load_and_preprocess_data(config['validation_target_data_path'])
     validation_target_labels=load_labels(config['validation_target_labels_path'])
 
 
-    # Create a DataLoader for your training data
+    # Establish a training dataset and create a DataLoader for your training data
     train_dataset = TensorDataset(train_data.to(device), train_labels.to(device))
     train_dataloader = DataLoader(train_dataset, batch_size)
 
-    # Create a DataLoader for your validation data
+    # Establish validation dataset and create a DataLoader for your validation data
     val_dataset = TensorDataset(validation_data.to(device), validation_labels.to(device))
     val_dataloader = DataLoader(val_dataset, batch_size)
     val_target_dataset=TensorDataset(validation_target_data.to(device),validation_target_labels.to(device))
@@ -53,9 +54,9 @@ def main():
     # Create a DataLoader for your target training data
     target_train_dataset = TensorDataset(target_data.to(device), train_labels.to(device))
     target_train_dataloader = DataLoader(target_train_dataset, batch_size)
+    
     # Load ResNet50 model without top layer
     # I'm setting pretrained to False because I believe that the paper did not use a pretained model
-    # If we need to, we can re-enable this later
     base_model = models.resnet50(weights=None)
     base_model = base_model.to(device)
     num_ftrs = base_model.fc.in_features
