@@ -98,7 +98,6 @@ def main():
 
     # Create a separate memory bank for the output vectors
     output_memory_bank = MemoryBank(1000, num_classes, device='cpu')
-    # label_memory_bank = MemoryBank(1000, args.num_classes, device='cpu')
 
     # Train the model
     print("Starting Training")
@@ -129,8 +128,6 @@ def main():
 
             # Update the memory bank
             with torch.no_grad():
-                # features = feature_extractor(inputs)
-                # memory_bank.update(features, labels)
                 output_memory_bank.update(outputs.detach(), labels)
         
         # append losses to their respective lists
