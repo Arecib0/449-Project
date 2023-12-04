@@ -12,9 +12,7 @@ def cross_entropy(y_true, y_pred):
     return F.nll_loss(y_pred_log, y_true)
 
 
-# Takes a list of numbers and sorts them in descending order. The returned list
-# is this sorted list but the elements are tuples of 2 where the first element is
-# the index of the second in the original list
+
 def sort_with_index(lst):
     '''
     Takes a list of numbers and sorts them in descending order. The returned list
@@ -35,7 +33,7 @@ def sort_with_index(lst):
     # index is the first element in each tuple
     return sorted_list
 
-# returns the list of the indices for the top k elements
+
 def top_k(lst,k):
     '''
     Returns a list of length k. These contains the indices of the largest k elements in lst (another list).
@@ -50,10 +48,6 @@ def top_k(lst,k):
     rank_lst.append(sorted_lst[i][0])
   return rank_lst
  
-
-# Takes the memory of all previous vectors of the CNN and those in the current batch.
-# it uses this these with the indices to be compared and returns the binary cross entropy
-# loss.
 
 def adaptive_clustering(B,bt,k):
     '''
