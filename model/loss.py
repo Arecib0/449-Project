@@ -94,6 +94,12 @@ def adaptive_clustering(B,bt,k):
 
 
 def entropy_separation(y_pred, rho, m):
+    '''
+    Calculates the entropy separation loss. Here rho is a target entropy and m is a threshold 
+    value for the absolute value of the difference between the entropy calculated from one of the
+    N predictors in y_pred and rho. y_pred is a torch tensor of size (N,#classes) #classes will be 3 for it's use.
+    The return is a torch tensor of the loss.
+    '''
     # Assumes that y_pred is the raw output of the model
     # and that y_pred is a 2D tensor of shape (N, num_classes)
     # In this case, the 2nd dimension corresponds to raw output for each class
@@ -119,5 +125,10 @@ def entropy_separation(y_pred, rho, m):
     return loss.mean()
 
 def combined_loss(y_true, y_pred, weight, rho, m, B, bt, k):
+    '''
+    Combines CE, AC, and ES loss into one function with an additional argument weight.
+    This weights the sum of ES and AC loss when added to CE loss.
+    Return is still a torch tensor.
+    '''
     total_entropy = cross_entropy(y_true, y_pred) + weight*adaptive_clustering(B, bt, k) + weight*entropy_separation(y_pred, rho, m)
     return total_entropy, cross_entropy(y_true, y_pred), adaptive_clustering(B, bt, k), entropy_separation(y_pred, rho, m)
