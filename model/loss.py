@@ -57,6 +57,11 @@ def top_k(lst,k):
 
 def adaptive_clustering(B,bt,k):
     '''
+    Takes an instance of the MemoryBank class B which is essentially a torch tensor of previous prediction 
+    vectors (or tensors) and determines the adaptive_clustering loss with current batch of prediction vectors, bt.
+    It also takes k in relation to top_k where each sample from B and bt have a similarity label assigned based on the 
+    indices of the top k elements. If the top indices match then the similarity label is 1; otherwise 0. This is just an
+    implementation of binary cross entropy between current batch and all previous predictions. Returns a torch tensor of loss.
     '''
   Loss=torch.zeros(1)
   count=0
