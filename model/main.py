@@ -57,6 +57,8 @@ def main():
     
     # Load ResNet50 model without top layer
     # I'm setting pretrained to False because I believe that the paper did not use a pretained model
+    # This section removes the fully connected layer in ResNet50 and replaces it with a new linear layer followed
+    # by a softmax. The linear function now ouputs a tensor with k=#classes spaces.
     base_model = models.resnet50(weights=None)
     base_model = base_model.to(device)
     num_ftrs = base_model.fc.in_features
@@ -100,7 +102,7 @@ def main():
 
     # Train the model
     print("Starting Training")
-    for epoch in range(config['source_epochs']):  # Assuming you want to train for 10 epochs
+    for epoch in range(config['source_epochs']):  
         print(epoch)
         epoch_ce_loss = []
         epoch_ac_loss = []
@@ -121,6 +123,7 @@ def main():
             print(ac_loss.item())
             epoch_es_loss.append(es_loss.item())
 
+            # backpropogation and gradient step
             loss.backward()
             optimizer.step()
 
@@ -130,7 +133,7 @@ def main():
                 # memory_bank.update(features, labels)
                 output_memory_bank.update(outputs.detach(), labels)
         
-        # Save the epoch losses
+        # append losses to their respective lists
         ce_losses.append(sum(epoch_ce_loss) / len(epoch_ce_loss))
         ac_losses.append(sum(epoch_ac_loss) / len(epoch_ac_loss))
         es_losses.append(sum(epoch_es_loss) / len(epoch_es_loss))
@@ -174,6 +177,7 @@ def main():
         print(epoch)
         correct = [0]*num_classes
         total = [0]*num_classes
+        # cross entropy left out because now training on unlabelled data
         for inputs, labels in target_train_dataloader:
             optimizer.zero_grad()
             outputs = base_model(inputs)
@@ -181,6 +185,7 @@ def main():
             es_loss=entropy_separation(outputs, config['rho'], config['m'])
 
             # Update the memory bank
+            # no labels this time so only updating ouput_memory_bank
             with torch.no_grad():
                 # features = feature_extractor(inputs)
                 # memory_bank.update(features, labels)
@@ -194,6 +199,8 @@ def main():
             # I believe that this, combined with the entropy separation
             # loss, is the primary domain adaptation method used in the paper.
             loss = ac_loss + es_loss
+
+            # backprop and gradient step
             loss.backward()
             optimizer.step()
 
