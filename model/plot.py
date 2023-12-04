@@ -50,6 +50,13 @@ def plotLoss(ce_losses, ac_losses, es_losses):
     plt.close()
 
 def plotAccuracy(class_acc, num_class):
+        '''
+        Takes two arguments: class_acc which is a list of sublists with length equal to the number of classes and 
+        num_class which is the number of classes in the classification problem. The ith 
+        entry of the jth sublist is the accuracy of the network on the jth epoch for the ith class. num_class is a
+        natural number.
+        The plot is saved to the Output folder as class_acc_plot.png.
+        '''
     # Assuming class_accuracies is a list of lists where each inner list contains the accuracies for each class for a single epoch
     print(class_acc)
     class_acc_np = np.array(class_acc)
