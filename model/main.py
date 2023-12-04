@@ -139,43 +139,12 @@ def main():
         es_losses.append(sum(epoch_es_loss) / len(epoch_es_loss))
         
         scheduler.step() # Update the learning rate
-        # Evaluate on the validation set
-        # base_model.eval()
-        # print("I'm gonna VALIDATE")
-        # with torch.no_grad():
-        #     correct = 0
-        #     total = 0
-        #     for inputs, labels in val_dataloader:
-        #         outputs = base_model(inputs)
-        #         _, predicted = torch.max(outputs.data, 1)
-        #         total += labels.size(0)
-        #         correct += (predicted == labels).sum().item()
-        #     accuracy = correct / total
-        # # Check for improvement
-        # if accuracy > best_accuracy:
-        #     best_accuracy = accuracy
-        #     epochs_no_improve = 0
-        # else:
-        #     epochs_no_improve += 1
-
-        # # Early stopping
-        # if epochs_no_improve == 12:
-        #     print('Early stopping!')
-        #     break
-
-        # Switch back to training mode
-        # base_model.train()
-    
-    # print("Breaking early for debugging purposes.")
-    # print("If you're seeing this, it means you forgot to comment out the early stopping code.")
-    # plotLoss(ce_losses, ac_losses, es_losses)
-    # return
 
     # Adapt the model to the target domain
     print("Begining target domain adaptation")
     for epoch in range(config['target_epochs']):
         print(epoch)
-        # established two lists of length num_classes which have all zeros.
+        # Established two lists of length num_classes which have all zeros.
         # Each entry in the list is for a different class. So if num_classes=3
         # and the first class is observed, total[0]+=1. If the prediction of 
         # the model is correct correct[0]+=1.
@@ -192,8 +161,6 @@ def main():
             # Update the memory bank
             # no labels this time so only updating ouput_memory_bank
             with torch.no_grad():
-                # features = feature_extractor(inputs)
-                # memory_bank.update(features, labels)
                 output_memory_bank.update(outputs)
 
             # Compute loss with similarity
