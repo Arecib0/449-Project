@@ -24,6 +24,6 @@ To run this program, please edit 'Config.yaml' contained in the Data Directory w
 To run `main.py`, use
 
 ```sh
-python model\main.py
+python model/main.py
 ```
 in terminal.
