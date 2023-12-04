@@ -100,28 +100,16 @@ def entropy_separation(y_pred, rho, m):
     N predictors in y_pred and rho. y_pred is a torch tensor of size (N,#classes) #classes will be 3 for it's use.
     The return is a torch tensor of the loss.
     '''
-    # Assumes that y_pred is the raw output of the model
-    # and that y_pred is a 2D tensor of shape (N, num_classes)
-    # In this case, the 2nd dimension corresponds to raw output for each class
-    # These raw outputs are converted to probabilities using softmax 
-    # in this function, so you don't need to apply softmax in the last layer of the model
-
-    # Apply softmax to convert raw output to probabilities
-    # y_pred = torch.softmax(y_pred, dim=1)
-
     # Calculate entropy of the predictions
     p_log_p = y_pred * torch.log(y_pred + 1e-9)  # add a small constant to avoid log(0)
     entropy = -p_log_p.sum(dim=1)
-    
-    # Calculate mean entropy
-    mean_entropy = entropy.mean()
-    
+
     # Calculate absolute difference from rho
-    diff = torch.abs(mean_entropy - rho)
-    
+    diff = (entropy - rho).abs()
+
     # Apply threshold
-    loss = torch.where(diff > m, -diff, torch.zeros_like(diff))
-    
+    loss = torch.where(diff > m, -diff, torch.tensor(0.0, device=diff.device))
+
     return loss.mean()
 
 def combined_loss(y_true, y_pred, weight, rho, m, B, bt, k):
