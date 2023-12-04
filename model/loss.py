@@ -3,6 +3,10 @@ import torch.nn.functional as F
 import numpy as np
 
 def cross_entropy(y_true, y_pred):
+    '''
+    Calculates the cross entropy between a known label ([1,0,0],[0,1,0],or [0,0,1] in 3 class case)
+    and a label predicted by the model of the same dimension. Both are torch tensors and the return a tensor of loss.
+    '''
     # Apply log to the predictions because nn.NLLLoss expects log probabilities
     y_pred_log = torch.log(y_pred)
     return F.nll_loss(y_pred_log, y_true)
@@ -12,6 +16,16 @@ def cross_entropy(y_true, y_pred):
 # is this sorted list but the elements are tuples of 2 where the first element is
 # the index of the second in the original list
 def sort_with_index(lst):
+    '''
+    Takes a list of numbers and sorts them in descending order. The returned list
+    is this sorted list but the elements are tuples of 2 where the first element is
+    the index of the second in the original list
+
+    Ex.
+    x=[1,4,2,6,8]; indices are [0,1,2,3,4]
+
+    sort_with_index(x) -> [(4,8),(3,6),(1,4),(2,2),(0,1)]
+    '''
     # Enumerate the list to create tuples of (index, element)
     indexed_list = list(enumerate(lst))
 
@@ -23,6 +37,13 @@ def sort_with_index(lst):
 
 # returns the list of the indices for the top k elements
 def top_k(lst,k):
+    '''
+    Returns a list of length k. These contains the indices of the largest k elements in lst (another list).
+
+    Ex. 
+    x=[1,4,2,6,8]; indices are [0,1,2,3,4]
+    top_k(x,3) -> [4,3,1]
+    '''
   sorted_lst=sort_with_index(lst)
   rank_lst=[]
   for i in range(k):
@@ -35,6 +56,8 @@ def top_k(lst,k):
 # loss.
 
 def adaptive_clustering(B,bt,k):
+    '''
+    '''
   Loss=torch.zeros(1)
   count=0
   eps=1e-9
