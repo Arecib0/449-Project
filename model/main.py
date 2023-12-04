@@ -175,8 +175,13 @@ def main():
     print("Begining target domain adaptation")
     for epoch in range(config['target_epochs']):
         print(epoch)
+        # established two lists of length num_classes which have all zeros.
+        # Each entry in the list is for a different class. So if num_classes=3
+        # and the first class is observed, total[0]+=1. If the prediction of 
+        # the model is correct correct[0]+=1.
         correct = [0]*num_classes
         total = [0]*num_classes
+        
         # cross entropy left out because now training on unlabelled data
         for inputs, labels in target_train_dataloader:
             optimizer.zero_grad()
@@ -205,12 +210,15 @@ def main():
             optimizer.step()
 
             scheduler.step() # Update the learning rate
-            _, predicted = torch.max(outputs.data, 1)
+            _, predicted = torch.max(outputs.data, 1) # gives max val of predictor and its index
+            # increments the correct entry of correct if the prediction was right
+            # increments 
             for i in range(num_classes):
                 correct[i] += (predicted[labels == i] == labels[labels == i]).sum().item()
                 total[i] += (labels == i).sum().item()
             
 
+        # add accuracies to class_accuracies list
         with torch.no_grad():
             accuracies = [correct[i] / total[i] if total[i] > 0 else 0 for i in range(num_classes)]
             if len(accuracies) < num_classes:
